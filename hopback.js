@@ -2,9 +2,7 @@ var Redis = require('redis'),
   Url = require('url');
 
 redisUrl = Url.parse(process.env.REDISTOGO_URL);
-redisClient = Redis.createClient(redisUrl.port, redisUrl.hostname, {
-  no_ready_check: true
-});
+redisClient = Redis.createClient(redisUrl.port, redisUrl.hostname);
 
 redisClient.auth(redisUrl.auth.split(':')[1], popQueue);
 
@@ -17,7 +15,11 @@ githubClient = new GithubClient();
 */
 
 function popQueue() {
+  console.log('waiting');
+
   redisClient.blpop('queue:github:auth', '0', function(error, queueResponse) {
+    console.log('working');
+
     authJob = JSON.parse(queueResponse[1]);
 
     console.log(authJob);
