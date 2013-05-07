@@ -1,5 +1,5 @@
 var Hopback = require('./hopback'),
-  authQueue = 'queue:github:auth',
+  authQueue = 'queue:hopback:auth',
   userQueue = 'queue:tun:user',
   authJob = {user: {id: 1}, code: "code"},
   assert = require('assert');
