@@ -1,1 +1,1 @@
-worker: node hopback.js
+worker: node worker.js
