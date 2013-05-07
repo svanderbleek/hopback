@@ -2,6 +2,7 @@
   "name": "hopback",
   "version": "0.0.0",
   "dependencies": {
-    "redis": "*"
+    "redis": "*",
+    "buffalo": "*"
   }
 }

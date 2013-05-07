@@ -1,10 +1,13 @@
 var Redis = require('redis'),
-  Url = require('url');
+  Url = require('url'),
+  Bson = require('buffalo');
 
 redisUrl = Url.parse(process.env.REDISTOGO_URL);
-redisClient = Redis.createClient(redisUrl.port, redisUrl.hostname);
+redisClient = Redis.createClient(redisUrl.port, redisUrl.hostname, {
+  return_buffers: true
+});
 
-redisClient.auth(redisUrl.auth.split(':')[1], watchQueue);
+redisClient.auth(redisUrl.auth.split(':')[1], popQueue);
 
 /*
 function GithubClient() {
@@ -14,19 +17,17 @@ GithubClient.prototype.authTokenRequest = function() {};
 githubClient = new GithubClient();
 */
 
-function watchQueue() {
-  popQueue(popQueue);
-}
+function popQueue() {
+  redisClient.blpop('queue:github:auth', '0', function(error, responseBuffer) {
+    authJob = Bson.parse(responseBuffer);
+    console.log(authJob);
 
-function popQueue(forever) {
-  redisClient.blpop('queue:github:auth', '0', function(error, queueResponse) {
-    console.log(queueResponse);
+    popQueue();
     /*githubClient.authTokenRequest(response.authCode, function(error, githubResponse)
       redisClient.rpush('queue:user', {
         id: queueResponse.id,
         username: githubResponse.username
       });
     });*/
-    forever(popQueue);
   });
 }
