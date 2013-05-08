@@ -1,6 +1,7 @@
 var Redis = require('redis'),
   Url = require('url'),
   Github = require('./github'),
+  Tun = require('./tun'),
   postProcess = [];
 
 redisUrl = Url.parse(process.env.REDISTOGO_URL);
@@ -10,34 +11,31 @@ redisClient = Redis.createClient(redisUrl.port, redisUrl.hostname, {
 });
 
 function workQueue() {
-  console.log('waiting');
 
   redisClient.blpop('queue:hopback:auth', '0', function(error, queueResponse) {
     var authJob, authCode;
 
-    console.log('working');
-
     authJob = JSON.parse(queueResponse[1]);
 
-    console.log(authJob);
-
-    user = authJob.user;
+    userId = authJob.id;
     authCode = authJob.code;
 
     Github.authTokenRequest(authCode, function(data) {
-      var userJob;
-
-      console.log("response");
+      var userUpdate,
+        authError,
+        updateError;
 
       if(data.token) {
-        userJob = JSON.stringify({ user: user, token: data.token });
+        userUpdate = JSON.stringify({ id: userId, token: data.token });
+
+        Tun.userUpdateRequest(userUpdate, function(error) {
+          updateError = JSON.stringify({ id: userId, code: code, error: data });
+          redisClient.rpush('queue:error:update', updateError);
+        });
       } else {
-        userJob = JSON.stringify({ user: user, error: data });
+        authError = JSON.stringify({ id: userId, code: code, error: data });
+        redisClient.rpush('queue:error:auth', authError);
       }
-
-      console.log(userJob);
-
-      redisClient.rpush('queue:tun:user', userJob);
 
       postProcess.forEach(function(callback) {
         callback.call();
