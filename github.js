@@ -1,17 +1,37 @@
-var http = require('http'),
-  authQuery = '';
+var https = require('https'),
+  querystring = require('querystring'),
+  authQuery = '',
+  authPath,
+  authOptions;
 
-authQuery += '?client_id=' + process.env.GITHUB_CLIENT_ID;
-authQuery += '&client_secret=' + process.env.GITHUB_CLIENT_SECRET;
-authQuery += '&code=';
+authQuery = querystring.stringify({
+  client_id: process.env.GITHUB_CLIENT_ID,
+  client_secret: process.env.GITHUB_CLIENT_SECRET,
+  code: ''
+});
+
+authPath = '/login/oauth/access_token?'
+
+authOptions = {
+  host: 'github.com'
+};
 
 exports.authTokenRequest = function(code, callback) {
-  var authOptions = {
-    host: 'github.com',
-    path: '/login/oauth/access_token'
-  };
+  authOptions.path = authPath + authQuery + code;
 
-  authOptions.path += code;
+  console.log(authOptions);
 
-  http.post(authOptions, callback);
+  https.get(authOptions, function(response) {
+    var data = '';
+
+    response.on('data', function(chunk) {
+      data += chunk;
+    });
+
+    response.on('end', function() {
+      console.log(data);
+
+      callback(data);
+    });
+  });
 };

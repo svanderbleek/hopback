@@ -7,15 +7,17 @@ var Hopback = require('./hopback'),
 Hopback.redis.flushdb();
 Hopback.redis.lpush(authQueue, JSON.stringify(authJob));
 
-Hopback.work();
-
 Hopback.postProcess(function() {
   Hopback.redis.lindex(userQueue, 0, function(err, res) {
     var out = JSON.parse(res);
-    assert.equal(authJob.user.id, out.user.id);
+
+    assert.equal(authJob, out);
+
     process.exit();
   });
 });
+
+Hopback.work();
 
 process.on('exit', function() {
   console.log('pass');
